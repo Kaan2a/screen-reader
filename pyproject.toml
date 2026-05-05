@@ -1,0 +1,40 @@
+[project]
+name = "autonomous-screen-reader"
+version = "0.1.0"
+description = "Autonomous Screen Reader & Commander — Event-Driven, DDD-compliant AI agent"
+requires-python = ">=3.12"
+
+# ─── Mypy (Strict Type Checking) ────────────────────────────────
+[tool.mypy]
+strict = true
+disallow_untyped_defs = true
+disallow_any_unimported = false
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
+show_error_codes = true
+pretty = true
+
+# ─── Ruff (Linting & Formatting) ────────────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "N"]
+# E  = pycodestyle errors
+# F  = pyflakes (unused imports, undefined names)
+# I  = isort (import ordering)
+# UP = pyupgrade (modern Python syntax)
+# N  = pep8-naming (class/function naming conventions)
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pyright]
+include = ["src", "main.py"]
+extraPaths = ["."]
+executionEnvironments = [
+  { root = "." }
+]
