@@ -6,14 +6,19 @@ Ensures ML inferences run non-blocking via executors to keep the main GUI respon
 import functools
 import os
 import time
+import logging
 from collections.abc import Callable
-from typing import Any
+from typing import ParamSpec, TypeVar
 
 import psutil
 
+logger = logging.getLogger(__name__)
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 # Generic tip tanimi, dekore edilen fonksiyonun orjinal tipini korumasi icin.
-def profile_performance[T: Callable[..., Any]](func: T) -> T:
+def profile_performance(func: Callable[P, R]) -> Callable[P, R]:
     """
     Belirtilen fonksiyonun calisma suresini (ms), tukettigi ekstra RAM miktarini (MB)
     ve anlik CPU kullanim artisini (%) hesaplayip konsola yazdirir.
@@ -26,7 +31,7 @@ def profile_performance[T: Callable[..., Any]](func: T) -> T:
     """
 
     @functools.wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         process = psutil.Process(os.getpid())
 
         # Baslangic metrikleri
@@ -37,7 +42,7 @@ def profile_performance[T: Callable[..., Any]](func: T) -> T:
         process.cpu_percent(interval=None)
 
         # Fonksiyonu calistir
-        result: Any = func(*args, **kwargs)
+        result: R = func(*args, **kwargs)
 
         # Bitis metrikleri
         end_time: float = time.perf_counter()
@@ -47,10 +52,10 @@ def profile_performance[T: Callable[..., Any]](func: T) -> T:
         execution_time_ms: float = (end_time - start_time) * 1000
         mem_diff: float = end_mem - start_mem
 
-        print(f"[Profiler] {func.__name__} Tamamlandi:")
-        print(f"  - Sure     : {execution_time_ms:.2f} ms")
-        print(f"  - Extra RAM: {mem_diff:+.2f} MB")
-        print(f"  - Anlik CPU: {cpu_usage:.1f}%")
+        logger.info(f"[Profiler] {func.__name__} Tamamlandi:")
+        logger.info(f"  - Sure     : {execution_time_ms:.2f} ms")
+        logger.info(f"  - Extra RAM: {mem_diff:+.2f} MB")
+        logger.info(f"  - Anlik CPU: {cpu_usage:.1f}%")
 
         return result
 

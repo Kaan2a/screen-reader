@@ -1,22 +1,30 @@
+"""
+@ai-context: Hardware abstraction utility for detecting best available computation device.
+Supports CUDA, DirectML, and CPU backends.
+"""
+
 import torch
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_best_device() -> str:
-    """
-    Returns the best available device for PyTorch.
-    Checks for CUDA (NVIDIA), DirectML (AMD/Intel on Windows), MPS (Mac), and falls back to CPU.
-    """
+    """Detects and returns the best available device string for torch."""
     if torch.cuda.is_available():
         return "cuda"
     
+    # Check for DirectML (requires torch-directml or similar)
     try:
         import torch_directml
         if torch_directml.is_available():
-            # Return string to prevent torch.load crashes with DirectML device objects
             return "privateuseone:0"
     except ImportError:
         pass
-
-    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-        return "mps"
-    
+        
     return "cpu"
+
+def get_compute_type(device: str) -> str:
+    """Returns recommended compute type (float16/int8/float32) for a device."""
+    if device == "cuda":
+        return "float16"
+    return "float32"

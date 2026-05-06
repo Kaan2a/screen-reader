@@ -1,9 +1,13 @@
+"""
+@ai-context: API layer for orchestrating web and OS-level interactions.
+Manages Spotify API, Chrome DevTools Protocol (CDP), and hardware media keys.
+"""
+
 import os
 import json
 import logging
 import pyautogui
 import requests
-from typing import Optional
 
 try:
     import websocket
@@ -14,42 +18,42 @@ logger = logging.getLogger(__name__)
 
 class MediaKeysController:
     """
-    Genel Medya Kontrolü
-    OS media tuşlarını kullanarak donanım seviyesinde en hızlı (<10ms) müzik/video kontrolü sağlar.
+    General Media Control
+    Uses OS media keys to provide hardware-level music/video control (<10ms).
     """
     def play_pause(self) -> bool:
         pyautogui.press('playpause')
-        logger.info("[OS Media] Play/Pause komutu gönderildi.")
+        logger.info("[OS Media] Play/Pause command sent.")
         return True
 
     def next_track(self) -> bool:
         pyautogui.press('nexttrack')
-        logger.info("[OS Media] Sonraki şarkı komutu gönderildi.")
+        logger.info("[OS Media] Next track command sent.")
         return True
 
     def prev_track(self) -> bool:
         pyautogui.press('prevtrack')
-        logger.info("[OS Media] Önceki şarkı komutu gönderildi.")
+        logger.info("[OS Media] Previous track command sent.")
         return True
 
     def volume_up(self, amount: int = 5) -> bool:
         for _ in range(amount):
             pyautogui.press('volumeup')
-        logger.info(f"[OS Media] Ses {amount} kademe artırıldı.")
+        logger.info(f"[OS Media] Volume increased by {amount} steps.")
         return True
 
     def volume_down(self, amount: int = 5) -> bool:
         for _ in range(amount):
             pyautogui.press('volumedown')
-        logger.info(f"[OS Media] Ses {amount} kademe azaltıldı.")
+        logger.info(f"[OS Media] Volume decreased by {amount} steps.")
         return True
 
 
 class SpotifyAPIController:
     """
     Spotify HTTP API
-    Gecikme < 50ms. Çalan şarkıyı değiştirmek veya durdurmak için arka planda hızlı ağ istekleri atar.
-    Not: SPOTIFY_ACCESS_TOKEN ortam değişkeni gerektirir.
+    Latency < 50ms. Sends background network requests to control playback.
+    Note: Requires SPOTIFY_ACCESS_TOKEN environment variable.
     """
     def __init__(self) -> None:
         self.token = os.environ.get("SPOTIFY_ACCESS_TOKEN", "")
@@ -66,40 +70,40 @@ class SpotifyAPIController:
         if not self.is_configured(): return False
         try:
             r = requests.put(f"{self.base_url}/play", headers=self.headers, timeout=1)
-            logger.info("[Spotify API] Play isteği gönderildi.")
+            logger.info("[Spotify API] Play request sent.")
             return r.status_code in [200, 204]
         except Exception as e:
-            logger.error(f"[Spotify API] Play hatası: {e}")
+            logger.error(f"[Spotify API] Play error: {e}")
             return False
 
     def pause(self) -> bool:
         if not self.is_configured(): return False
         try:
             r = requests.put(f"{self.base_url}/pause", headers=self.headers, timeout=1)
-            logger.info("[Spotify API] Pause isteği gönderildi.")
+            logger.info("[Spotify API] Pause request sent.")
             return r.status_code in [200, 204]
         except Exception as e:
-            logger.error(f"[Spotify API] Pause hatası: {e}")
+            logger.error(f"[Spotify API] Pause error: {e}")
             return False
 
     def next_track(self) -> bool:
         if not self.is_configured(): return False
         try:
             r = requests.post(f"{self.base_url}/next", headers=self.headers, timeout=1)
-            logger.info("[Spotify API] Next isteği gönderildi.")
+            logger.info("[Spotify API] Next request sent.")
             return r.status_code in [200, 204]
         except Exception as e:
-            logger.error(f"[Spotify API] Next hatası: {e}")
+            logger.error(f"[Spotify API] Next error: {e}")
             return False
 
-    def previous_track(self) -> bool:
+    def prev_track(self) -> bool:
         if not self.is_configured(): return False
         try:
             r = requests.post(f"{self.base_url}/previous", headers=self.headers, timeout=1)
-            logger.info("[Spotify API] Previous isteği gönderildi.")
+            logger.info("[Spotify API] Previous request sent.")
             return r.status_code in [200, 204]
         except Exception as e:
-            logger.error(f"[Spotify API] Previous hatası: {e}")
+            logger.error(f"[Spotify API] Previous error: {e}")
             return False
 
     def shuffle(self, state: bool = True) -> bool:
@@ -107,51 +111,53 @@ class SpotifyAPIController:
         try:
             state_str = "true" if state else "false"
             r = requests.put(f"{self.base_url}/shuffle?state={state_str}", headers=self.headers, timeout=1)
-            logger.info(f"[Spotify API] Shuffle {state_str} isteği gönderildi.")
+            logger.info(f"[Spotify API] Shuffle {state_str} request sent.")
             return r.status_code in [200, 204]
         except Exception as e:
-            logger.error(f"[Spotify API] Shuffle hatası: {e}")
+            logger.error(f"[Spotify API] Shuffle error: {e}")
             return False
 
     def repeat(self, state: str = "context") -> bool:
         if not self.is_configured(): return False
         try:
             r = requests.put(f"{self.base_url}/repeat?state={state}", headers=self.headers, timeout=1)
-            logger.info(f"[Spotify API] Repeat {state} isteği gönderildi.")
+            logger.info(f"[Spotify API] Repeat {state} request sent.")
             return r.status_code in [200, 204]
         except Exception as e:
-            logger.error(f"[Spotify API] Repeat hatası: {e}")
+            logger.error(f"[Spotify API] Repeat error: {e}")
             return False
 
     def set_volume(self, percent: int) -> bool:
         if not self.is_configured(): return False
         try:
             r = requests.put(f"{self.base_url}/volume?volume_percent={percent}", headers=self.headers, timeout=1)
-            logger.info(f"[Spotify API] Volume {percent} isteği gönderildi.")
+            logger.info(f"[Spotify API] Volume {percent} request sent.")
             return r.status_code in [200, 204]
         except Exception as e:
-            logger.error(f"[Spotify API] Volume hatası: {e}")
+            logger.error(f"[Spotify API] Volume error: {e}")
             return False
 
 
 class ChromeCDPController:
     """
-    Chrome DevTools Protocol (CDP) Kontrolcüsü
-    Tarayıcıdaki aktif sekmeleri okuyarak YouTube gibi sayfalara milisaniyelik JS enjekte eder.
-    (Chrome '--remote-debugging-port=9222' ile başlatılmış olmalıdır.)
+    Chrome DevTools Protocol (CDP) Controller
+    Injects JS into active browser tabs (e.g., YouTube) with millisecond latency.
+    (Chrome must be started with '--remote-debugging-port=9222')
     """
     def __init__(self, port: int = 9222) -> None:
         self.port = port
         self.base_url = f"http://localhost:{self.port}/json"
         if websocket is None:
-            logger.warning("'websocket-client' kütüphanesi eksik. CDP işlemleri başarısız olabilir.")
+            logger.warning("'websocket-client' library is missing. CDP operations may fail.")
 
-    def _get_tab_ws_url(self, keyword: str) -> Optional[str]:
+    def _get_tab_ws_url(self, keyword: str) -> str | None:
         try:
             r = requests.get(self.base_url, timeout=1)
             tabs = r.json()
             for tab in tabs:
-                if keyword.lower() in tab.get("url", "").lower() or keyword.lower() in tab.get("title", "").lower():
+                url = tab.get("url", "").lower()
+                title = tab.get("title", "").lower()
+                if keyword.lower() in url or keyword.lower() in title:
                     return tab.get("webSocketDebuggerUrl")
         except Exception:
             return None
@@ -163,7 +169,7 @@ class ChromeCDPController:
             
         ws_url = self._get_tab_ws_url(keyword)
         if not ws_url:
-            logger.warning(f"CDP: '{keyword}' içeren sekme bulunamadı veya Debugging kapalı.")
+            logger.warning(f"CDP: Tab containing '{keyword}' not found or debugging is disabled.")
             return False
 
         try:
@@ -176,12 +182,12 @@ class ChromeCDPController:
                 }
             }
             ws.send(json.dumps(payload))
-            ws.recv()  # Yanıt bekle (milisaniyeler sürer)
+            ws.recv()  # Wait for response
             ws.close()
-            logger.info(f"[CDP API] '{keyword}' sekmesine JS enjekte edildi.")
+            logger.info(f"[CDP API] JS injected into '{keyword}' tab.")
             return True
         except Exception as e:
-            logger.error(f"[CDP API] JS Inject hatası: {e}")
+            logger.error(f"[CDP API] JS Inject error: {e}")
             return False
 
     def youtube_play_pause(self) -> bool:
@@ -264,12 +270,17 @@ class ChromeCDPController:
         js = "document.querySelector('.atvwebplayersdk-nextup-button')?.click();"
         return self.execute_js("primevideo", js)
 
+    # ------------------- SPOTIFY WEB -------------------
+    def spotify_play_pause(self) -> bool:
+        js = "document.querySelector('[data-testid=\"control-button-playpause\"]')?.click();"
+        return self.execute_js("spotify", js)
+
 
 class APILayer:
     """
-    API Katmanı Yöneticisi
-    Gecikme Hedefi: < 50ms
-    Birden fazla web veya masaüstü uygulamasının API / CDP bağlantılarını orkestre eder.
+    API Layer Manager
+    Target Latency: < 50ms
+    Orchestrates API / CDP connections for multiple web and desktop applications.
     """
     def __init__(self) -> None:
         self.media_keys = MediaKeysController()
@@ -278,8 +289,8 @@ class APILayer:
 
     def route_media_command(self, action: str, target: str = "os") -> bool:
         """
-        Gelen medya komutunu en hızlı ve uygun hedefe yönlendirir.
-        Örnek: route_media_command("play", "youtube")
+        Routes media commands to the most appropriate target.
+        Example: route_media_command("play", "youtube")
         """
         target = target.lower()
         
@@ -313,27 +324,30 @@ class APILayer:
             elif action == "next_episode": return self.chrome.prime_next_episode()
 
         # 5. TWITTER / X (CDP API)
-        elif "twitter" in target or "x.com" in target or "x" in target:
+        elif target in ("twitter", "x", "x.com") or "twitter" in target or "x.com" in target:
             if action == "like": return self.chrome.twitter_like()
             elif action == "retweet": return self.chrome.twitter_retweet()
 
-        # 6. SPOTIFY (HTTP API)
+        # 6. SPOTIFY (HTTP API primary + CDP fallback for play/pause)
         elif "spotify" in target:
             if self.spotify.is_configured():
-                if action == "play": return self.spotify.play()
-                elif action == "pause": return self.spotify.pause()
-                elif action == "next": return self.spotify.next_track()
-                elif action == "prev": return self.spotify.previous_track()
-                elif action == "shuffle": return self.spotify.shuffle(True)
+                if action == "play":       return self.spotify.play()
+                elif action == "pause":    return self.spotify.pause()
+                elif action == "next":     return self.spotify.next_track()
+                elif action == "prev":     return self.spotify.prev_track()
+                elif action == "shuffle":  return self.spotify.shuffle(True)
                 elif action == "unshuffle": return self.spotify.shuffle(False)
-                elif action == "repeat": return self.spotify.repeat("context")
+                elif action == "repeat":   return self.spotify.repeat("context")
                 elif action == "repeat_one": return self.spotify.repeat("track")
                 elif action == "repeat_off": return self.spotify.repeat("off")
-            else:
-                pass
 
-        # 7. OS KATMANI (Fallback veya Genel Medya Komutu)
-        # Sadece hedef 'os' ise genel tuşlara basılır. 'spotify' isteyip API bozuksa başka sekmeyi etkilememesi için.
+            # Fallback to CDP if HTTP API is not configured
+            if action in ["play", "pause", "play_pause"]:
+                return self.chrome.spotify_play_pause()
+
+            return False
+
+        # 7. OS LAYER (Fallback or General Media Command)
         if target == "os":
             if action in ["play", "pause", "play_pause"]:
                 return self.media_keys.play_pause()
@@ -346,6 +360,6 @@ class APILayer:
             elif action == "vol_down":
                 return self.media_keys.volume_down()
 
-        logger.warning(f"[API Katmanı] '{action}' eylemi '{target}' için eşleşmedi veya API ayarlanmadı.")
+        logger.warning(f"[API Layer] Action '{action}' not matched for target '{target}' or API not configured.")
         return False
-
+        

@@ -1,18 +1,35 @@
+# Core Framework
+numpy
+pydantic
+psutil
+requests
+pillow
+
+# UI & Display
 customtkinter
 mss
 pyautogui
-SpeechRecognition
-pyaudio
-easyocr
-opencv-python
-numpy
-keyboard
+
+# AI Engines
 faster-whisper
-onnxruntime-directml
-torch
-torch-directml
-einops
-transformers==4.44.2
+llama-cpp-python
+outlines
+transformers>=4.44.2
 accelerate
-bitsandbytes
 timm
+einops
+torch
+
+# Windows Automation
+pywinauto
+pygetwindow
+keyboard
+pyaudio
+
+# Optional / Specific Performance
+webrtcvad
+onnxruntime-directml
+torch-directml
+
+# Web Automation
+playwright
